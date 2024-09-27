@@ -1,14 +1,15 @@
-const Evento = require("../models/evento");
+const Evento = require('../models/evento.js');
+const Participante = require("../models/participante");
 
 const EventoController = {
   create: async (req, res) => {
     try {
-      const { nome, data, localizacao } = req.body;
+      const { nome, data_evento, localizacao } = req.body;
 
       const EventoCriado = await Evento.create({
         nome,
-        data,
-        localizacao
+        data_evento,
+        localizacao,
       });
 
       return res.status(200).json({
@@ -25,9 +26,9 @@ const EventoController = {
   update: async (req, res) => {
     try {
       const { id } = req.params;
-      const { nome, data, localizacao } = req.body;
+      const { nome, data_evento, localizacao } = req.body;
 
-      const EventoUpdate = await Evento.findBypk(id);
+      const EventoUpdate = await Evento.findByPk(id);
 
       if (EventoUpdate == null) {
         return res.status(404).json({
@@ -36,8 +37,8 @@ const EventoController = {
       }
       const updated = await EventoUpdate.update({
         nome,
-        data,
-        localizacao
+        data_evento,
+        localizacao,
       });
 
       if (updated) {
@@ -55,10 +56,10 @@ const EventoController = {
   },
   getAll: async (req, res) => {
     try {
-      const Evento = await User.findAll();
+      const eventos = await Evento.findAll();  // Alterado para "eventos"
       return res.status(200).json({
         msg: "Eventos encontrados",
-        Evento: Evento,
+        Evento: eventos,  // Retorna "eventos" na resposta
       });
     } catch (error) {
       console.error(error);
@@ -93,13 +94,45 @@ const EventoController = {
           msg: "Evento não encontrado",
         });
       }
-      EventoFind.destroy();
+      const ParticipantesById = await Participante.findAll({
+        where: {
+          eventoId: id,
+        },
+      });
+      if (ParticipantesById.length > 0) {
+        for (const participante of ParticipantesById) {
+          await participante.destroy();
+        }
+      }
+      await EventoFind.destroy();
       return res.status(200).json({
         msg: "Evento deletado com sucesso!",
       });
     } catch (error) {
       console.error(error);
       return res.status(500).json({ msg: "Acione o Suporte" });
+    }
+  },  
+  getAllPerEvent: async (req, res) => {
+    try {
+      const { id } = req.params;
+      const ParticipanteById = await Participante.findAll({
+        where: {
+          eventoId: id,
+        },
+      });
+      if (ParticipanteById == null) {
+        return res.status(404).json({
+          msg: "Participantes não encontrados",
+        });
+      }
+      return res.status(200).json({
+        msg: "Participantes encontrados",
+        Participante: ParticipanteById,
+      });
+    } catch (error) {
+      console.error(error);
+      return res.status(404).json({ msg: "Acione o Suporte" });
     }
   },
 };

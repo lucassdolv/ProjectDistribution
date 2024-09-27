@@ -1,3 +1,4 @@
+const { where } = require("../config/config");
 const Participante = require("../models/participante");
 
 const ParticipanteController = {
@@ -8,7 +9,7 @@ const ParticipanteController = {
       const ParticipanteCriado = await Participante.create({
         nome,
         email,
-        eventoId
+        eventoId,
       });
 
       return res.status(200).json({
@@ -27,7 +28,7 @@ const ParticipanteController = {
       const { id } = req.params;
       const { nome, email, eventoId } = req.body;
 
-      const ParticipanteUpdate = await Participante.findBypk(id);
+      const ParticipanteUpdate = await Participante.findByPk(id);
 
       if (ParticipanteUpdate == null) {
         return res.status(404).json({
@@ -37,7 +38,7 @@ const ParticipanteController = {
       const updated = await ParticipanteUpdate.update({
         nome,
         email,
-        eventoId
+        eventoId,
       });
 
       if (updated) {
@@ -55,10 +56,10 @@ const ParticipanteController = {
   },
   getAll: async (req, res) => {
     try {
-      const Participante = await User.findAll();
+      const Participantes = await Participante.findAll();
       return res.status(200).json({
         msg: "Participantes encontrados",
-        Participante: Participante,
+        Participante: Participantes,
       });
     } catch (error) {
       console.error(error);
@@ -100,6 +101,28 @@ const ParticipanteController = {
     } catch (error) {
       console.error(error);
       return res.status(500).json({ msg: "Acione o Suporte" });
+    }
+  },
+  getAllPerEvent: async (req,res) => {
+    try{
+      const { eventoId } = req.params;
+      const ParticipanteFindByEvent = await Participante.findAll({
+        where: {
+          eventoId: eventoId
+        }
+      })
+      if (ParticipanteFindByEvent == null) {
+        return res.status(404).json({
+          msg: "Participantes não encontrados"
+        })
+      }
+    return res.status(200).json({
+      msg:"Participantes encontrados",
+      Participante: ParticipanteFindByEvent
+    })
+    } catch (error){
+      console.error(error)
+      return res.status(404).json({ msg: "Acione o Suporte"})
     }
   },
 };
